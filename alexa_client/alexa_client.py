@@ -5,6 +5,7 @@ import settings
 import requests
 import json
 import uuid
+import time
 import os
 import re
 from requests_futures.sessions import FuturesSession
@@ -231,6 +232,51 @@ class AlexaClient(object):
             # Close all file handlers
             for f in files_to_close:
                 f.close()
+
+    def ask_series(self, input_list, delay=0):
+        """Sends a series of requests to AVS.
+
+        Args:
+            input_list (list): A list of input full path audio filenames to send
+                               to AVS. The list elements can also be a
+                               tuple, (in_filename, out_filename) to
+                               specify where to save the response audio.
+                               Otherwise the responses will be saved to
+                               the temporary directory.
+            delay (int): Specify the number of seconds between each request.
+                         defaults to zero.
+
+        Returns:
+            List of paths where the responses were saved.
+        """
+        output_paths = []
+        pattern = re.compile(r".(\w+\.wav|pcm|mp3)$")
+        for audio in input_list:
+            if isinstance(audio, tuple):
+                name_in = audio[0]
+                name_out = audio[1]
+            else:
+                name_in = audio
+                name_out = None
+
+            audioMatch = re.search(pattern, name_in)
+            if audioMatch:
+                print ">>>Sending audio to Alexa AVS"
+                try:
+                    res = self.ask(name_in, save_to=name_out)
+                    output_paths.append(res)
+                    print "Audio output location: ", res
+                except RuntimeError as e:
+                    print "Error: ", e, "\nAudio sent: ", audio
+                print "---Finished sending audio---\n"
+            else:
+                print "Skipped: {} doesn't match expected audio format wav/pcm"\
+                        .format(name_in)
+
+            if delay > 0:
+                print "{} second delay added".format(delay)
+                time.sleep(delay)
+        return output_paths
 
     def clean(self):
         """
