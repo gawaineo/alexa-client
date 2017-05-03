@@ -250,7 +250,7 @@ class AlexaClient(object):
             List of paths where the responses were saved.
         """
         output_paths = []
-        pattern = re.compile(r".(\w+\.wav|pcm|mp3)$")
+        pattern = re.compile(r".(\w+\.wav|pcm)$")
         for audio in input_list:
             if isinstance(audio, tuple):
                 name_in = audio[0]
