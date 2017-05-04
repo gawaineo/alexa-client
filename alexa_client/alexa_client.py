@@ -290,7 +290,7 @@ def read_input(file_name):
     """Reads input file with input & output location of audio files.
 
     Args:
-        file_name (str): Takes the full audio file path as input.
+        file_name (str): Takes the full file path as input.
 
     Returns:
         A list of tuples. Tuple has (input_file_location, output_file_location)
