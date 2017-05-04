@@ -94,6 +94,7 @@ optional arguments:
 ```
 
 #### To send a single audio request to Alexa
+---
 
 `python alexa_client/alexa_client.py -a "/tmp/alexa_play_a_tribe_call_quest_radio_on_sonos.wav"`
 
@@ -101,6 +102,7 @@ To specify output file location:
 `python alexa_client/alexa_client.py -a "/tmp/sample.wav" -o /tmp/out.mp3`
 
 #### Send a list of audio requests in series (in order)
+---
 
 `python alexa_client/alexa_client.py -s audio_input.txt`
 
@@ -110,6 +112,7 @@ To add a delay:
 **Note**: each line in the input file is formatted as such: **<input_file_location>,<output_file_location>**.
 No quotes are needed in the file and the **<output_file_location>** is optional and can be left empty.
 #### Send a list of audio requests concurrently
+---
 
 `python alexa_client/alexa_client.py -m audio_input.txt`
 
