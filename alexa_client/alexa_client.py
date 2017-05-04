@@ -267,7 +267,7 @@ class AlexaClient(object):
                     output_paths.append(res)
                     print "Audio output location: ", res
                 except RuntimeError as e:
-                    print "Error: ", e, "\nAudio sent: ", audio
+                    print "Error: ", e, "\nAudio sent: ", audio[0]
                 print "---Finished sending audio---\n"
             else:
                 print "Skipped: {} doesn't match expected audio format wav/pcm"\
