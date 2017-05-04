@@ -305,8 +305,10 @@ def main():
     """Parses command line arguments passed to Alexa client script.
     """
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument('-a', '--audio', action="store", default=None)
-    parser.add_argument('-o', '--output', action="store", default=None)
+    parser.add_argument('-a', '--audio', action="store", default=None,
+        help="takes .wav or .pcm file as audio input")
+    parser.add_argument('-o', '--output', action="store", default=None,
+        help=".mp3 file is returned from Alexa (if she returns audio)")
     parser.add_argument('-s', '--series', action="store",
         help="requires a command separated file with input file location")
     parser.add_argument('-m', '--multiple', action="store",
