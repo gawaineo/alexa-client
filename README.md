@@ -1,6 +1,6 @@
 # Alexa Client
 
-Python client for Amazon's Alexa Voice Service (AVS). 
+Python client for Amazon's Alexa Voice Service (AVS).
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ See the **Authorization Code Grant** section below for an example of how to do t
     git clone https://github.com/ewenchou/alexa-client.git
     ```
 
-2. Configure settings. Set the `PRODUCT_ID`, `CLIENT_ID`,  `CLIENT_SECRET`, and `REFRESH_TOKEN` values in `alexa_client/settings.py`. 
+2. Configure settings. Set the `PRODUCT_ID`, `CLIENT_ID`,  `CLIENT_SECRET`, and `REFRESH_TOKEN` values in `alexa_client/settings.py`.
 
     *Note: If you do not have a refresh token, see the __Authorization Code Grant__ section below for an example of how to get one.*
 
@@ -38,7 +38,7 @@ See the **Authorization Code Grant** section below for an example of how to do t
 
 ## Authorization Code Grant
 
-The Python script, `auth_web.py` is included in this repository to make it easier to request an **Authorization Code Grant** as detailed in [Amazon's guide](https://developer.amazon.com/public/solutions/alexa/alexa-voice-service/docs/authorizing-your-alexa-enabled-product-from-a-website). 
+The Python script, `auth_web.py` is included in this repository to make it easier to request an **Authorization Code Grant** as detailed in [Amazon's guide](https://developer.amazon.com/public/solutions/alexa/alexa-voice-service/docs/authorizing-your-alexa-enabled-product-from-a-website).
 
 **NOTE**: The `auth_web.py` script is taken and modified from the [respeaker/Alexa](https://github.com/respeaker/Alexa) Github repository.
 
@@ -68,10 +68,54 @@ Install the requirements for `auth_web.py`:
 Now you can run the `auth_web.py` script.
 
 1. Run the script: `python auth_web.py`
-2. Open a web browser and go to `http://localhost:3000`
+2. Open a web browser and go to `http://localhost:5000`
 3. You should be redirected to an Amazon Login page. Enter your username and password and login.
 4. You should now see a simple page that says `Success!` and the refresh token value.
 5. Copy the refresh token value and set it in `alexa_client/settings.py`
+
+## Run via command line
+
+1. Make sure all installation steps are completed.
+2. To see all command line options run: `python alexa_client/alexa_client.py -h`
+
+```
+optional arguments:
+  -h, --help            show this help message and exit
+  -a AUDIO, --audio AUDIO
+                        takes .wav or .pcm file as audio input
+  -o OUTPUT, --output OUTPUT
+                        .mp3 file is returned from Alexa (if she returns audio)
+  -s SERIES, --series SERIES
+                        requires a comma separated file with input file location
+  -m MULTIPLE, --multiple MULTIPLE
+                        requires a comma separated file with input file location
+  -d DELAY, --delay DELAY
+                        delay between request in a series (seconds)
+```
+
+#### Send a single audio request to Alexa
+---
+
+`python alexa_client/alexa_client.py -a "/tmp/alexa_play_a_tribe_call_quest_radio_on_sonos.wav"`
+
+To specify output file location:
+`python alexa_client/alexa_client.py -a "/tmp/sample.wav" -o /tmp/out.mp3`
+
+#### Send a list of audio requests in series (in order)
+---
+
+`python alexa_client/alexa_client.py -s audio_input.txt`
+
+To add a delay:
+`python alexa_client/alexa_client.py -s audio_input.txt -d 10`
+
+**Note**: each line in the input file is formatted as such: **<input_file_location>,<output_file_location>**.
+No quotes are needed in the file and the **<output_file_location>** is optional and can be left empty.
+
+#### Send a list of audio requests concurrently
+---
+
+`python alexa_client/alexa_client.py -m audio_input.txt`
 
 ## Tests
 
