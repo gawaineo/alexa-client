@@ -3,6 +3,7 @@ Python client class for interacting with Amazon Alexa Voice Service (AVS).
 """
 import settings
 import requests
+import argparse
 import json
 import uuid
 import time
@@ -283,3 +284,51 @@ class AlexaClient(object):
         Deletes all files and directories in the temporary directory.
         """
         os.system('rm -r {}/*'.format(self.temp_dir))
+
+
+def read_input(file_name):
+    """Reads input file with input & output location of audio files.
+
+    Args:
+        file_name (str): Takes the full audio file path as input.
+
+    Returns:
+        A list of tuples. Tuple has (input_file_location, output_file_location)
+    """
+    with open(file_name, 'r') as input_file:
+        output = [tuple(pair.split(","))
+                    for pair in input_file.read().split("\n")
+                    if pair != '']
+    return output
+
+def main():
+    """Parses command line arguments passed to Alexa client script.
+    """
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument('-a', '--audio', action="store", default=None)
+    parser.add_argument('-o', '--output', action="store", default=None)
+    parser.add_argument('-s', '--series', action="store",
+        help="requires a command separated file with input file location")
+    parser.add_argument('-m', '--multiple', action="store",
+        help="requires a command separated file with input file location")
+    parser.add_argument('-d', '--delay', action="store", type=int, default=0,
+        help="delay between request in a series")
+    args = parser.parse_args()
+
+    alexa = AlexaClient()
+    if args.audio:
+        try:
+            print alexa.ask(args.audio, args.output)
+        except Exception as e:
+            print e
+            print "Audio sent:", args.audio
+    elif args.series:
+        inputs = read_input(args.series)
+        print alexa.ask_series(inputs, delay=args.delay)
+    elif args.multiple:
+        inputs = read_input(args.multiple)
+        print alexa.ask_multiple(inputs)
+
+
+if __name__ == '__main__':
+    main()
