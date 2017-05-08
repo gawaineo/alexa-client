@@ -19,16 +19,15 @@ See the **Authorization Code Grant** section below for an example of how to do t
     ```
     git clone https://github.com/gawaineo/alexa-client.git
     ```
-
-2. Configure settings. Set the `PRODUCT_ID`, `CLIENT_ID`,  `CLIENT_SECRET`, and `REFRESH_TOKEN` values in `alexa_client/settings.py`.
-
-    *Note: If you do not have a refresh token, see the __Authorization Code Grant__ section below for an example of how to get one.*
-
-3. Install requirements
+2. Install requirements
 
     ```
     pip install -r requirements.txt
     ```
+
+3. Configure settings. Set the `PRODUCT_ID`, `CLIENT_ID`,  `CLIENT_SECRET`, and `REFRESH_TOKEN` values in `alexa_client/settings.py`.
+
+    *Note: If you do not have a refresh token, see the __Authorization Code Grant__ section below for an example of how to get one.*
 
 4. Install alexa_client
 
