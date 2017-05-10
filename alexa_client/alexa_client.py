@@ -108,13 +108,21 @@ class AlexaClient(object):
             save_to = "{}/{}.mp3".format(self.temp_dir, uuid.uuid4())
         with open(save_to, 'wb') as f:
             if res.status_code == requests.codes.ok:
+                print res.headers
                 for v in res.headers['content-type'].split(";"):
                     if re.match('.*boundary.*', v):
                         boundary =  v.split("=")[1]
                 response_data = res.content.split(boundary)
                 audio = None
+                directives = None
                 for d in response_data:
-                    if (len(d) >= 1024):
+                    # capture alexa directive in messageBody
+                    if 'application/json' in d:
+                        message = d.split('\r\n')[3]
+                        json_input = json.loads(message)
+                        directives = json.dumps(json_input["messageBody"])
+                        print "\n\n", directives
+                    if (len(d) >= 1024) and 'audio/mpeg' in d:
                         audio = d.split('\r\n\r\n')[1].rstrip('--')
                 if audio is None:
                     raise RuntimeError("Failed to save response audio")
