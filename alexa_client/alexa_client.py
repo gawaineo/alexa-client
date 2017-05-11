@@ -130,7 +130,7 @@ class AlexaClient(object):
                 with open(save_to, 'wb') as f:
                     f.write(audio)
             return (save_to, directives)
-            
+
         # Raise exception for the HTTP status code
         print "AVS returned error: Status: {}, Text: {}".format(
             res.status_code, res.text)
@@ -259,9 +259,9 @@ class AlexaClient(object):
                          defaults to zero.
 
         Returns:
-            List of paths where the responses were saved.
+            List of tuples containing [(output_audio, json_directives)]
         """
-        output_paths = []
+        output = []
         pattern = re.compile(r".(\w+\.wav|pcm)$")
         for audio in input_list:
             if isinstance(audio, tuple):
@@ -276,7 +276,7 @@ class AlexaClient(object):
                 print ">>>Sending audio to Alexa AVS"
                 try:
                     res = self.ask(name_in, save_to=name_out)
-                    output_paths.append(res)
+                    output.append(res)
                     print "Audio output location: ", res
                 except RuntimeError as e:
                     print "Error: ", e, "\nAudio sent: ", audio[0]
@@ -288,7 +288,7 @@ class AlexaClient(object):
             if delay > 0:
                 print "{} second delay added".format(delay)
                 time.sleep(delay)
-        return output_paths
+        return output
 
     def clean(self):
         """
