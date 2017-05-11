@@ -90,10 +90,11 @@ class AlexaClient(object):
         }
         return url, headers, request_data
 
-    def save_response_audio(self, res, save_to=None):
+    def process_alexa_response(self, res, save_to=None):
         """Saves the audio from AVS response to a file
 
-        Parses the AVS response object and saves the audio to a file.
+        Parses the AVS response object and saves the audio to a file
+        and returns the directives.
 
         Args:
             res (requests.Response): Response object from request.
@@ -102,36 +103,38 @@ class AlexaClient(object):
                            be used and saved in the temporary directory.
 
         Returns:
-            Path (str) to where the audio file is saved.
+            A tuple containing:
+                - Path (str) to where the audio file is saved.
+                - Json (str) of directives returned from AVS.
         """
-        if not save_to:
-            save_to = "{}/{}.mp3".format(self.temp_dir, uuid.uuid4())
-        with open(save_to, 'wb') as f:
-            if res.status_code == requests.codes.ok:
-                print res.headers
-                for v in res.headers['content-type'].split(";"):
-                    if re.match('.*boundary.*', v):
-                        boundary =  v.split("=")[1]
-                response_data = res.content.split(boundary)
-                audio = None
-                directives = None
-                for d in response_data:
-                    # capture alexa directive in messageBody
-                    if 'application/json' in d:
-                        message = d.split('\r\n')[3]
-                        json_input = json.loads(message)
-                        directives = json.dumps(json_input["messageBody"])
-                        print "\n\n", directives
-                    if (len(d) >= 1024) and 'audio/mpeg' in d:
-                        audio = d.split('\r\n\r\n')[1].rstrip('--')
-                if audio is None:
-                    raise RuntimeError("Failed to save response audio")
-                f.write(audio)
-                return save_to
-            # Raise exception for the HTTP status code
-            print "AVS returned error: Status: {}, Text: {}".format(
-                res.status_code, res.text)
-            res.raise_for_status()
+
+        if res.status_code == requests.codes.ok:
+            for v in res.headers['content-type'].split(";"):
+                if re.match('.*boundary.*', v):
+                    boundary =  v.split("=")[1]
+            response_data = res.content.split(boundary)
+
+            audio = None
+            directives = None
+            for d in response_data:
+                # capture alexa directive in messageBody
+                if 'application/json' in d:
+                    message = d.split('\r\n')[3]
+                    json_input = json.loads(message)
+                    directives = json.dumps(json_input["messageBody"])
+                if (len(d) >= 1024) and 'audio/mpeg' in d:
+                    audio = d.split('\r\n\r\n')[1].rstrip('--')
+            if audio:
+                if not save_to:
+                    save_to = "{}/{}.mp3".format(self.temp_dir, uuid.uuid4())
+                with open(save_to, 'wb') as f:
+                    f.write(audio)
+            return (save_to, directives)
+            
+        # Raise exception for the HTTP status code
+        print "AVS returned error: Status: {}, Text: {}".format(
+            res.status_code, res.text)
+        res.raise_for_status()
 
     def ask(self, audio_file, save_to=None):
         """
@@ -167,7 +170,7 @@ class AlexaClient(object):
                 url, headers, request_data = self.get_request_params()
                 # Resend request
                 res = requests.post(url, headers=headers, files=files)
-            return self.save_response_audio(res, save_to)
+            return self.process_alexa_response(res, save_to)
 
     def ask_multiple(self, input_list):
         """Sends multiple requests to AVS concurrently.
@@ -232,8 +235,8 @@ class AlexaClient(object):
             # Get the response from each future and save the audio
             for future, name_out in futures:
                 res = future.result()
-                save_to = self.save_response_audio(res, name_out)
-                saved_filenames.append(save_to)
+                save_to = self.process_alexa_response(res, name_out)
+                saved_filenames.append(save_to[0])
             return saved_filenames
         except Exception as e:
             print str(e)
