@@ -261,7 +261,7 @@ class AlexaClient(object):
         Returns:
             List of tuples containing [(output_audio, json_directives)]
         """
-        output = []
+        file_and_directives = []
         pattern = re.compile(r".(\w+\.wav|pcm)$")
         for audio in input_list:
             if isinstance(audio, tuple):
@@ -276,7 +276,7 @@ class AlexaClient(object):
                 print ">>>Sending audio to Alexa AVS"
                 try:
                     res = self.ask(name_in, save_to=name_out)
-                    output.append(res)
+                    file_and_directives.append(res)
                     print "Audio output location: ", res
                 except RuntimeError as e:
                     print "Error: ", e, "\nAudio sent: ", audio[0]
@@ -288,7 +288,7 @@ class AlexaClient(object):
             if delay > 0:
                 print "{} second delay added".format(delay)
                 time.sleep(delay)
-        return output
+        return file_and_directives
 
     def clean(self):
         """
