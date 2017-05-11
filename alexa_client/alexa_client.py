@@ -184,15 +184,15 @@ class AlexaClient(object):
                                the temporary directory.
 
         Returns:
-            List of paths where the responses were saved.
+            List of tuples containing [(output_audio, json_directives)]
         """
         session = FuturesSession(max_workers=len(input_list))
         # Keep a list of file handlers to close. The input file handlers
         # need to be kept open while requests_futures is sending the
         # requests concurrently in the background.
         files_to_close = []
-        # List of saved files to return
-        saved_filenames = []
+        # List of saved files and directives to return
+        file_and_directives = []
         # List of future tuples, (future, output_filename)
         futures = []
 
@@ -235,9 +235,9 @@ class AlexaClient(object):
             # Get the response from each future and save the audio
             for future, name_out in futures:
                 res = future.result()
-                save_to = self.process_alexa_response(res, name_out)
-                saved_filenames.append(save_to[0])
-            return saved_filenames
+                response = self.process_alexa_response(res, name_out)
+                file_and_directives.append(response)
+            return file_and_directives
         except Exception as e:
             print str(e)
         finally:
