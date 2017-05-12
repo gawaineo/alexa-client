@@ -234,8 +234,8 @@ class AlexaClient(object):
 
             # Get the response from each future and save the audio
             for future, name_out in futures:
-                res = future.result()
-                response = self.process_alexa_response(res, name_out)
+                result = future.result()
+                response = self.process_alexa_response(result, name_out)
                 file_and_directives.append(response)
             return file_and_directives
         except Exception as e:
