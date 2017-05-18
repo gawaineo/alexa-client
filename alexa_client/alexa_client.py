@@ -90,10 +90,11 @@ class AlexaClient(object):
         }
         return url, headers, request_data
 
-    def save_response_audio(self, res, save_to=None):
+    def process_alexa_response(self, res, save_to=None):
         """Saves the audio from AVS response to a file
 
-        Parses the AVS response object and saves the audio to a file.
+        Parses the AVS response object and saves the audio to a file
+        and returns the directives.
 
         Args:
             res (requests.Response): Response object from request.
@@ -102,28 +103,38 @@ class AlexaClient(object):
                            be used and saved in the temporary directory.
 
         Returns:
-            Path (str) to where the audio file is saved.
+            A tuple containing:
+                - Path (str) to where the audio file is saved.
+                - Json (str) of directives returned from AVS.
         """
-        if not save_to:
-            save_to = "{}/{}.mp3".format(self.temp_dir, uuid.uuid4())
-        with open(save_to, 'wb') as f:
-            if res.status_code == requests.codes.ok:
-                for v in res.headers['content-type'].split(";"):
-                    if re.match('.*boundary.*', v):
-                        boundary =  v.split("=")[1]
-                response_data = res.content.split(boundary)
-                audio = None
-                for d in response_data:
-                    if (len(d) >= 1024):
-                        audio = d.split('\r\n\r\n')[1].rstrip('--')
-                if audio is None:
-                    raise RuntimeError("Failed to save response audio")
-                f.write(audio)
-                return save_to
-            # Raise exception for the HTTP status code
-            print "AVS returned error: Status: {}, Text: {}".format(
-                res.status_code, res.text)
-            res.raise_for_status()
+
+        if res.status_code == requests.codes.ok:
+            for v in res.headers['content-type'].split(";"):
+                if re.match('.*boundary.*', v):
+                    boundary =  v.split("=")[1]
+            response_data = res.content.split(boundary)
+
+            audio = None
+            directives = None
+            for d in response_data:
+                # capture alexa directive in messageBody
+                if 'application/json' in d:
+                    message = d.split('\r\n')[3]
+                    json_input = json.loads(message)
+                    directives = json.dumps(json_input["messageBody"])
+                if (len(d) >= 1024) and 'audio/mpeg' in d:
+                    audio = d.split('\r\n\r\n')[1].rstrip('--')
+            if audio:
+                if not save_to:
+                    save_to = "{}/{}.mp3".format(self.temp_dir, uuid.uuid4())
+                with open(save_to, 'wb') as f:
+                    f.write(audio)
+            return (save_to, directives)
+
+        # Raise exception for the HTTP status code
+        print "AVS returned error: Status: {}, Text: {}".format(
+            res.status_code, res.text)
+        res.raise_for_status()
 
     def ask(self, audio_file, save_to=None):
         """
@@ -159,7 +170,7 @@ class AlexaClient(object):
                 url, headers, request_data = self.get_request_params()
                 # Resend request
                 res = requests.post(url, headers=headers, files=files)
-            return self.save_response_audio(res, save_to)
+            return self.process_alexa_response(res, save_to)
 
     def ask_multiple(self, input_list):
         """Sends multiple requests to AVS concurrently.
@@ -173,15 +184,15 @@ class AlexaClient(object):
                                the temporary directory.
 
         Returns:
-            List of paths where the responses were saved.
+            List of tuples containing [(output_audio, json_directives)]
         """
         session = FuturesSession(max_workers=len(input_list))
         # Keep a list of file handlers to close. The input file handlers
         # need to be kept open while requests_futures is sending the
         # requests concurrently in the background.
         files_to_close = []
-        # List of saved files to return
-        saved_filenames = []
+        # List of saved files and directives to return
+        file_and_directives = []
         # List of future tuples, (future, output_filename)
         futures = []
 
@@ -223,10 +234,10 @@ class AlexaClient(object):
 
             # Get the response from each future and save the audio
             for future, name_out in futures:
-                res = future.result()
-                save_to = self.save_response_audio(res, name_out)
-                saved_filenames.append(save_to)
-            return saved_filenames
+                result = future.result()
+                response = self.process_alexa_response(result, name_out)
+                file_and_directives.append(response)
+            return file_and_directives
         except Exception as e:
             print str(e)
         finally:
@@ -248,9 +259,9 @@ class AlexaClient(object):
                          defaults to zero.
 
         Returns:
-            List of paths where the responses were saved.
+            List of tuples containing [(output_audio, json_directives)]
         """
-        output_paths = []
+        file_and_directives = []
         pattern = re.compile(r".(\w+\.wav|pcm)$")
         for audio in input_list:
             if isinstance(audio, tuple):
@@ -265,7 +276,7 @@ class AlexaClient(object):
                 print ">>>Sending audio to Alexa AVS"
                 try:
                     res = self.ask(name_in, save_to=name_out)
-                    output_paths.append(res)
+                    file_and_directives.append(res)
                     print "Audio output location: ", res
                 except RuntimeError as e:
                     print "Error: ", e, "\nAudio sent: ", audio[0]
@@ -277,7 +288,7 @@ class AlexaClient(object):
             if delay > 0:
                 print "{} second delay added".format(delay)
                 time.sleep(delay)
-        return output_paths
+        return file_and_directives
 
     def clean(self):
         """
