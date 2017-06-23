@@ -95,7 +95,7 @@ optional arguments:
 #### Send a single audio request to Alexa
 ---
 
-`python alexa_client/alexa_client.py -a "/tmp/alexa_play_a_tribe_call_quest_radio_on_sonos.wav"`
+`python alexa_client/alexa_client.py -a "/tmp/alexa_play_a_tribe_call_quest_radio.wav"`
 
 To specify output file location:
 `python alexa_client/alexa_client.py -a "/tmp/sample.wav" -o /tmp/out.mp3`
